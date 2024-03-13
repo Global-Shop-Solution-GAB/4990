@@ -1,0 +1,105 @@
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+
+f.Intrinsic.Control.If(v.Caller.Hook,=,15752)
+	f.Intrinsic.Control.CallSub(GoodToGo)
+f.Intrinsic.Control.ElseIf(v.Caller.Hook,=,49752)
+	f.Intrinsic.Control.CallSub(GoodToGoSFDC)
+f.Intrinsic.Control.Else
+	f.Intrinsic.Control.End
+f.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+Program.Sub.GoodToGo.Start
+f.Intrinsic.Control.Try
+'15752 - "%/" PREFIX
+V.Local.sSQL.Declare(String,"SELECT EMPLOYEE FROM EMPLOYEE_MSTR WHERE ALPHA_SORT='{0}'")
+V.Local.sScan.Declare
+V.Local.sRet.Declare
+Function.ODBC.Connection!Con.OpenCompanyConnection
+F.Intrinsic.String.Replace(V.Passed.000007,"%/","",V.Local.sScan)
+
+V.Passed.000007.Set("")
+
+'Modify the SQL query by injecting the values that we extracted above
+Function.Intrinsic.String.Build(V.Local.sSQL,V.Local.sScan,V.Local.sSQL)
+
+'Execute query, retrieve results
+
+Function.ODBC.Connection!Con.ExecuteAndReturn(V.Local.sSQL,V.Local.sRet)
+'F.ODBC.Connection!Con.Close
+
+'If no results were returned, alert the user, enable the "Scan WO" form again, and wait for another scan
+Function.Intrinsic.Control.If(V.Ambient.ExecuteAndReturnEOF)
+	Function.Intrinsic.UI.Msgbox("Badge number not found.")
+	Function.Intrinsic.Control.ExitSub
+Function.Intrinsic.Control.EndIf
+
+'Set Passed Variable to first employee logged into the job
+V.Passed.009993.Set(V.Local.sRet)
+
+'All done.  Exit.
+f.Intrinsic.Control.CallSub(UnloadAll)
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+
+Program.Sub.GoodToGo.End
+
+Program.Sub.catching.Start
+v.Local.sError.declare(string)
+F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_4990_ScanBadge.g2u",V.Ambient.NewLine,v.Args.sub,V.Args.errorno,V.args.errordesc,V.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+f.Intrinsic.Control.CallSub(UnloadAll)
+Program.Sub.catching.End
+
+
+Program.Sub.UnloadAll.Start
+F.ODBC.Connection!Con.Close
+F.Intrinsic.Control.End
+Program.Sub.UnloadAll.End
+
+
+
+Program.Sub.GoodToGoSFDC.Start
+f.Intrinsic.Control.Try
+'49752 SFDC.net - "%/" PREFIX
+V.Local.sSQL.Declare(String,"SELECT EMPLOYEE FROM EMPLOYEE_MSTR WHERE ALPHA_SORT='{0}'")
+V.Local.sScan.Declare
+V.Local.sRet.Declare
+
+Function.ODBC.Connection!Con.OpenCompanyConnection
+'F.Intrinsic.String.Replace(EmployeeID,"%/","",V.Local.sScan)
+
+'Modify the SQL query by injecting the values that we extracted above
+Function.Intrinsic.String.Build(V.Local.sSQL,V.Passed.scandata,V.Local.sSQL)
+
+'Execute query, retrieve results
+
+Function.ODBC.Connection!Con.ExecuteAndReturn(V.Local.sSQL,V.Local.sRet)
+'F.ODBC.Connection!Con.Close
+
+'If no results were returned, alert the user, enable the "Scan WO" form again, and wait for another scan
+Function.Intrinsic.Control.If(V.Ambient.ExecuteAndReturnEOF)
+	Function.Intrinsic.UI.Msgbox("Badge number not found.")
+	Function.Intrinsic.Control.ExitSub
+Function.Intrinsic.Control.EndIf
+
+'Set Passed Variable to first employee logged into the job
+V.Passed.ReturnEmployeeID.Set(V.Local.sRet)
+
+'All done.  Exit.
+f.Intrinsic.Control.CallSub(UnloadAll)
+
+
+f.Intrinsic.Control.catch
+f.Intrinsic.Control.CallSub(catching,"sub",v.Ambient.CurrentSubroutine,"errorno",v.Ambient.ErrorNumber,"errordesc",v.Ambient.ErrorDescription)
+f.Intrinsic.Control.EndTry
+Program.Sub.GoodToGoSFDC.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$3/11/2015 11:24:12 PM$}$False
+Program.Sub.Comments.End 
